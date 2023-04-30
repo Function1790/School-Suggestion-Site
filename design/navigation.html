@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>서령건의</title>
+    <link rel="stylesheet" href="navigation.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script>
+        const print = (value) => console.log(value)
+        $(document).ready(() => {
+            $('#menuBtn').click(() => {
+                $('.menu-box').css({left:'-100%'})
+                $('.menu-content').show()
+                $('.menu-box').animate({left:'0'}, 300)
+            })
+
+            $('#closeBtn').click(()=> {
+                $('.menu-content').hide()
+            })
+        })
+    </script>
+</head>
+
+<body>
+    <!--Menu-->
+    <div class="menu-content">
+        <div class="menu-box">
+            <div class="menu-box-header">
+                <img id="closeBtn" src="https://cdn-icons-png.flaticon.com/512/2961/2961937.png" alt="">
+            </div>
+            <div class="menu-box-container">
+                <div class="menu-shortcut">
+                    <a href="">급식표</a>
+                </div>
+                <div class="menu-shortcut">
+                    <a href="">건의함</a>
+                </div>
+                <div class="menu-shortcut">
+                    <a href="">결정사항</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--Main-->
+    <div class="navbar-wrapper">
+        <div class="navbar-header">
+            <img id="menuBtn" src="https://cdn-icons-png.flaticon.com/512/1828/1828859.png" alt="메뉴">
+        </div>
+        <div class="navbar-container">
+            아이콘
+        </div>
+        <div class="navbar-footer">
+            로그인
+        </div>
+    </div>
+</body>
+
+</html>
