@@ -92,6 +92,11 @@ async function TemplateLogin(req) {
     return await formatTemplate(req, await readFile(template_path + 'login.html'))
 }
 
+async function TemplateCafeteria(req, data) {
+    let innerHTML = ""
+    return await formatTemplate(req, (await readFile(template_path + 'cafeteria.html')).replace('{{replace_holder}}', innerHTML))
+}
+
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -188,6 +193,14 @@ app.post('/login-check', (req, res) => {
     })()
 })
 
+app.get('/info', (req, res) => {
+    const session = req.session
+    if (!session.isLogined) {
+        res.send(scriptHTML('alert("로그인 후 이용 가능합니다.")'+forcedMoveJS('/login')))
+    }
+    
+})
+
 app.get('/logout', (req, res) => {
     if (req.session.isLogined) {
         delete req.session.isLogined
@@ -197,7 +210,7 @@ app.get('/logout', (req, res) => {
 })
 
 app.get('/', async (req, res) => {
-    res.send(await TemplateNavbar(req))
+    res.send(await TemplateCafeteria(req, 0))
 })
 
 app.listen(5500, () => console.log('Start in 5500'))
