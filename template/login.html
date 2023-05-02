@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>서령건의</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;500&display=swap');
+
+        * {
+            font-weight: 300;
+            margin: 0;
+            padding: 0;
+            font-size: 4.5vw;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        a {
+            color: black;
+            text-decoration: none;
+        }
+
+        #body {
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+            width: 100%;
+        }
+
+        .login-form {
+            margin: 5vw auto;
+            display: flex;
+        }
+
+        .login-container {
+            width: 80vw;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid rgb(101, 101, 101);
+            padding: 3vw;
+        }
+
+        #input-id {
+            border-radius: 5px 5px 0 0;
+        }
+
+        #input-pw {
+            border-radius: 0 0 5px 5px;
+        }
+
+        #loginBtn {
+            font-weight: 500;
+            margin-top: 10vw;
+            box-sizing: border-box;
+            padding: 3vw;
+            width: 100%;
+            text-align: center;
+            background-color: rgb(136, 136, 136);
+            color: white;
+            border-radius: 15px;
+            transition: 0.2s;
+        }
+    </style>
+    <script>
+        $(document).ready(() => {
+
+            let enabledLogin = false
+
+            function enableLoginBtn() {
+                enabledLogin = true
+                $('#loginBtn').attr("disabled", false)
+                $('#loginBtn').css({ 'background-color': 'rgb(49, 90, 241)' })
+            }
+
+            function disableLoginBtn() {
+                enabledLogin = false
+                $('#loginBtn').attr("disabled", true)
+                $('#loginBtn').css({ 'background-color': 'rgb(136, 136, 136)' })
+            }
+
+            function checkLength() {
+                const idLength = $('#input-id').val().length
+                const pwLength = $('#input-pw').val().length
+                if (idLength > 3 && idLength <= 20 && pwLength > 3 && pwLength < 20) {
+                    enableLoginBtn()
+                } else {
+                    disableLoginBtn()
+                }
+            }
+
+            $('#input-id').keyup(checkLength)
+
+            $('#input-pw').keyup(checkLength)
+        })
+    </script>
+</head>
+
+<body>
+    <div id="body">
+        {{nav_holder}}
+        <div class="content-wrapper">
+            <div class="login-form">
+                <form action="/login-check" method="post">
+                    <div class="login-container">
+                        <div class="input-container">
+                            <input type="text" name="id" id="input-id" placeholder="ID" maxlength="20">
+                            <input type="text" name="pw" id="input-pw" placeholder="Password" maxlength="20">
+                        </div>
+                        <input type="submit" id="loginBtn" value="로그인">
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

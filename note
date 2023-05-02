@@ -1,4 +1,5 @@
 https://www.oopy.io/
+https://blogpack.tistory.com/79
 
 # User
 create table user (num int not null AUTO_INCREMENT,

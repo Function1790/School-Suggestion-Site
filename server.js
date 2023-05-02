@@ -2,8 +2,30 @@ const express = require('express')
 const app = express()
 const mysql = require('mysql')
 
+//body Parser
+const bodyParser = require('body-parser')
+app.use(bodyParser.json())
+app.use(express.urlencoded({ extended: false }))
+
+//Session
+const session = require('express-session')
+const Memorystore = require('memorystore')
+
+app.use(session({
+    secure: true,
+    secret: 'SECRET',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        httpOnly: true,
+        Secure: true
+    },
+    name: 'session-cookie'
+}))
+
 //File
 const fs = require('fs')
+const template_path = './template/'
 
 async function readFile(path) {
     return await new Promise((resolve, reject) => {
@@ -20,21 +42,39 @@ async function readFile(path) {
 
 const print = (value) => { console.log(value) }
 
-async function formNavbarHTML() {
-    return await readFile('./nav.html')
-}
-async function formSuggestHTML(data) {
-    return (await readFile('./suggest.html')).replace("{{replace_holder}}", data).replace('{{nav_holder}}', await formNavbarHTML())
+function forcedMoveJS(url){
+    return `<script>window.location.href = "${url}"</script>`
 }
 
-async function formPostHTML(data) {
+function scriptHTML(code){
+    return `<script>${code}</script>`
+}
+
+async function formatTemplate(template) {
+    return template.replace('{{nav_holder}}', await TemplateNavbar())
+}
+
+async function TemplateNavbar() {
+    return await readFile(template_path + 'nav.html')
+}
+
+async function TemplateSuggest(data) {
+    return await formatTemplate((await readFile(template_path + 'suggest.html')).replace("{{replace_holder}}", data))
+}
+
+async function TemplatePosts(data) {
     let date = new Date(data.created_date)
     const innerHTML = `<div class="post">
     <div class="title">${data.title}</div>
     <div class="created-time">${dtToString(date)}</div>
     <div class="content">${data.content}</div></div>`
-    return (await readFile('./posts.html')).replace("{{replace_holder}}", innerHTML).replace('{{nav_holder}}', await formNavbarHTML())
+    return await formatTemplate((await readFile(template_path + 'posts.html')).replace("{{replace_holder}}", innerHTML))
 }
+
+async function TemplateLogin() {
+    return await formatTemplate(await readFile(template_path + 'login.html'))
+}
+
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -59,7 +99,7 @@ function dtToString(dt) {
     return dt.toLocaleDateString() + '\t' + dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds()
 }
 
-app.get("/suggestion", (res, req) => {
+app.get("/suggestion", (req, res) => {
     ; (async () => {
         let _data = ""
         const result = await sqlQuery('select * from suggestion')
@@ -73,29 +113,62 @@ app.get("/suggestion", (res, req) => {
             <div class="content-date">${dtToString(date)}</div>
         </div>`
         }
-        req.send(await formSuggestHTML(_data))
+        print(req.session.name)
+        res.send(await TemplateSuggest(_data))
     })()
 })
 
-app.get('/suggestion/:id', (res, req) => {
-    const post_id = res.params.id
+app.get('/suggestion/:id', (req, res) => {
+    const post_id = req.params.id
         ; (async () => {
             const result = await sqlQuery(`SELECT * FROM suggestion WHERE id=${post_id}`)
             try {
                 if (result.length == 0) {
-                    req.status(404).send("해당 게시물이 존재하지 않습니다.")
+                    res.status(404).send("해당 게시물이 존재하지 않습니다.")
                     return
                 }
             } catch {
-                req.status(404).send("해당 게시물이 존재하지 않습니다.")
+                res.status(404).send("해당 게시물이 존재하지 않습니다.")
                 return
             }
-            req.send(await formPostHTML({
+            res.send(await TemplatePosts({
                 title: result[0].title,
                 created_date: result[0].created_date,
                 content: result[0].content
             }))
         })()
+})
+
+app.get('/login', (req, res) => {
+    ; (async () => {
+        res.send(await TemplateLogin())
+    })()
+})
+
+app.post('/login-check', (req, res) => {
+    var body = req.body;
+    ; (async () => {
+        const id = connection.escape(body.id)
+        const pw = connection.escape(body.pw)
+
+        const result = await sqlQuery(`SELECT * FROM user WHERE id=${id} and pw=${pw}`)
+
+        if (result.length == 0) {
+            res.status(404).send('<script>alert("존재하지 않는 아이디/비밀번호 입니다.");window.location.href = "/login"</script>')
+            return
+        }
+
+        req.session.isLogined = true
+        req.session.name = result[0].name
+        req.session.school_num = result[0].school_num
+        req.session.save((err)=> {
+            if(err){
+                res.status(200).send(scriptHTML('alert("세션 저장 과정에서 오류가 발생하였습니다. 관리자에게 문의하세요.")')+forcedMoveJS('/login'))
+                return
+            }
+        })
+        res.status(200).send(forcedMoveJS('/suggestion'))
+    })()
 })
 
 app.listen(5500, () => console.log('Start in 5500'))
