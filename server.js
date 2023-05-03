@@ -62,6 +62,10 @@ function scriptHTML(code) {
     return `<script>${code}</script>`
 }
 
+function alertMoveHTML(alert_text, url) {
+    return `<script>alert('${alert_text}');window.location.href = "${url}"</script>`
+}
+
 async function formatTemplate(req, template) {
     return template.replace('{{nav_holder}}', await TemplateNavbar(req))
 }
@@ -97,6 +101,11 @@ async function TemplateCafeteria(req, data) {
     return await formatTemplate(req, (await readFile(template_path + 'cafeteria.html')).replace('{{replace_holder}}', innerHTML))
 }
 
+async function TemplateCreateSuggestion(req) {
+    return await formatTemplate(req, await readFile(template_path + 'createSuggestion.html'))
+}
+
+
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -118,7 +127,13 @@ async function sqlQuery(query) {
 }
 
 function dtToString(dt) {
-    return dt.toLocaleDateString() + '\t' + dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds()
+    return dt.toISOString().replace('T', ' ').slice(0, -5)
+}
+
+const TIME_ZONE = 9 * 60 * 60 * 1000;
+
+function timeNowStr() {
+    return new Date((new Date().getTime()) + TIME_ZONE).toISOString().replace('T', ' ').slice(0, -5)
 }
 
 app.get("/suggestion", (req, res) => {
@@ -172,7 +187,7 @@ app.post('/login-check', (req, res) => {
         const id = connection.escape(body.id)
         const pw = connection.escape(body.pw)
 
-        const result = await sqlQuery(`SELECT * FROM user WHERE id=${id} and pw=${pw}`)
+        const result = await sqlQuery(`SELECT * FROM user WHERE uid=${id} and upw=${pw}`)
 
         if (result.length == 0) {
             res.status(404).send('<title>서령건의</title><script>alert("존재하지 않는 아이디/비밀번호 입니다.");window.location.href = "/login"</script>')
@@ -182,6 +197,7 @@ app.post('/login-check', (req, res) => {
         req.session.isLogined = true
         req.session.name = result[0].name
         req.session.school_num = result[0].school_num
+        req.session.uid = result[0].uid
         req.session.save((err) => {
             if (err) {
                 res.status(200).send(scriptHTML('alert("세션 저장 과정에서 오류가 발생하였습니다. 관리자에게 문의하세요.")') + forcedMoveJS('/login'))
@@ -196,9 +212,9 @@ app.post('/login-check', (req, res) => {
 app.get('/info', (req, res) => {
     const session = req.session
     if (!session.isLogined) {
-        res.send(scriptHTML('alert("로그인 후 이용 가능합니다.")'+forcedMoveJS('/login')))
+        res.send(scriptHTML('alert("로그인 후 이용 가능합니다.")' + forcedMoveJS('/login')))
     }
-    
+
 })
 
 app.get('/logout', (req, res) => {
@@ -207,6 +223,34 @@ app.get('/logout', (req, res) => {
         delete req.session.name
     }
     res.send(forcedMoveJS('/'))
+})
+
+app.get('/suggestion-create', async (req, res) => {
+    const session = req.session
+    if (!session.isLogined) {
+        res.send(alertMoveHTML('이 콘텐츠를 로그인 후 이용가능합니다', '/login'))
+        return
+    }
+    res.send(await TemplateCreateSuggestion(req))
+})
+
+app.post('/suggestion-create-post', async (req, res) => {
+    const session = req.session
+    if (!session.isLogined) {
+        res.send(alertMoveHTML('이 콘텐츠를 로그인 후 이용가능합니다', '/login'))
+        return
+    }
+    var body = req.body
+    print(body)
+    if (!body.title || !body.content) {
+        res.send(alertMoveHTML("제목/내용을 입력해주세요", "/suggestion-create"))
+        return
+    }
+    const _query = `insert into suggestion (title, content, uid, created_date) value ('${body.title}', '${body.content}', '${session.uid}', '${timeNowStr()}')
+    `
+    let result=await sqlQuery(_query)
+    print(_query)
+    res.send(forcedMoveJS('/suggestion'))
 })
 
 app.get('/', async (req, res) => {

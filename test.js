@@ -1,12 +1,5 @@
-const School = require('school-kr');
-const school = new School();
 
-const print = (t) => console.log(t)
+const TIME_ZONE = 9 * 60 * 60 * 1000; // 9시간
 
-//N100000176
-
-;(async () =>{
-    school.init(School.Type.HIGH, School.Region.CHUNGNAM, 'N100000176');
-    const data = await school.getMeal(2023,5,2)
-    print(data)
-})()
+let a=new Date((new Date().getTime())+TIME_ZONE).toISOString().replace('T', ' ').slice(0, -5)
+console.log(a)

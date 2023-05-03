@@ -17,7 +17,7 @@ create table suggestion (id int not null AUTO_INCREMENT,
  created_date date,
  primary key(id));
 
- insert into suggestion (title, content, uid, craeted_date) value ('이것은 테스트 입니다', '진짜 테스트에요;;', 'user123', '2023-04-30')
+insert into suggestion (title, content, uid, created_date) value ('이것은 테스트 입니다', '진짜 테스트에요;;', 'user123', '2023-04-30')
 
 NICE 인증키 : 1a7b7a87413a401f9f55f5293ca39196
 학교 코드 : 8140089
